@@ -8,6 +8,18 @@ const Note = require('../models/note');
 const Folder = require('../models/folder');
 const Tag = require('../models/tag');
 
+
+function validateNoteId(id) {
+  return Note.count({ _id: id })
+    .then(count => {
+      if (count === 0) {
+        const err = new Error('The `noteId` doesn\'t exist');
+        err.status = 404;
+        return Promise.reject(err);
+      }
+    });
+}
+
 function validateFolderId(folderId, userId) {
   if (folderId === undefined) {
     return Promise.resolve();
@@ -150,7 +162,6 @@ router.post('/', (req, res, next) => {
       next(err);
     });
 });
-    
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/:id', (req, res, next) => {
@@ -159,6 +170,7 @@ router.put('/:id', (req, res, next) => {
   const { title, content, folderId, tags = [] } = req.body;
 
   /***** Never trust users - validate input *****/
+
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -188,12 +200,12 @@ router.put('/:id', (req, res, next) => {
 
   const updateNote = { title, content, folderId, tags, userId };
 
-  Promise.all([validateFolderId(folderId, userId), validateTagIds(tags, userId)])
+  Promise.all([validateFolderId(folderId, userId), validateTagIds(tags, userId), validateNoteId(id, userId)])
     .then(() => Note.findOneAndUpdate({ _id: id, userId }, updateNote, { new: true }))
     .then(result => {
       res
         .location(`${req.originalUrl}/${result.id}`)
-        .status(201)
+        .status(200)
         .json(result);
     })
     .catch(err => {

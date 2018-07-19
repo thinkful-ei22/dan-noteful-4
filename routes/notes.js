@@ -21,7 +21,7 @@ function validateNoteId(id) {
 }
 
 function validateFolderId(folderId, userId) {
-  if (folderId === undefined) {
+  if (folderId === '' || folderId === null || folderId === undefined) {
     return Promise.resolve();
   }
   if(!mongoose.Types.ObjectId.isValid(folderId)) {
@@ -148,7 +148,11 @@ router.post('/', (req, res, next) => {
     });
   }
 
-  const newNote = { title, content, folderId, tags, userId };
+  const newNote = { title, content, tags, userId };
+
+  if(mongoose.Types.ObjectId.isValid(folderId)) {
+    newNote.folderId = folderId;
+  }
 
   Promise.all([validateFolderId(folderId, userId), validateTagIds(tags, userId)])
     .then(() => Note.create(newNote))
@@ -198,7 +202,11 @@ router.put('/:id', (req, res, next) => {
     }
   }
 
-  const updateNote = { title, content, folderId, tags, userId };
+  const updateNote = { title, content, tags, userId };
+
+  if (mongoose.Types.ObjectId.isValid(folderId)) {
+    updateNote.folderId = folderId;
+  }
 
   Promise.all([validateFolderId(folderId, userId), validateTagIds(tags, userId), validateNoteId(id, userId)])
     .then(() => Note.findOneAndUpdate({ _id: id, userId }, updateNote, { new: true }))

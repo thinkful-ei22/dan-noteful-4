@@ -319,7 +319,7 @@ describe('Noteful API - Notes', function () {
 
   });
 
-  describe.only('PUT /api/notes/:id', function () {
+  describe('PUT /api/notes/:id', function () {
 
     it('should update the note when provided valid data', function () {
       const updateItem = {
